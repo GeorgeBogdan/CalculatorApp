@@ -3,6 +3,7 @@ package com.example.bubus.myapplication;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,62 +11,92 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 
 public class MainActivity extends ActionBarActivity {
 
-    private Integer previous = null;
-    private int current = 0;
-    private boolean isNewNumber = true;
-    private Character op = '\0';
-
+    private HistoryItem current;
+    private boolean isNewNumber;
+    private ArrayList<HistoryItem> history = new ArrayList<HistoryItem>();
     private void DisplayStrings()//some change@
     {
+        String result = "";
+        for (HistoryItem item:history) {
+            result=result+" " + item.content;
+        }
+        TextView historyTextView = (TextView)findViewById(R.id.historyTextView);
+        historyTextView.setText(result);
         TextView currentTextView = (TextView)findViewById(R.id.currentTextView);
-        currentTextView.setText(Integer.toString(current));
+        currentTextView.setText(current.content);
     }
-    private void ClearAll()
-    {
-        current = 0;
-        op = null;
-        previous = null;
-        isNewNumber = true;
+    private void ClearAll() {
+        current = new HistoryItem();
+        current.isOperation = false;
+        current.content = "0";
+        isNewNumber=true;
+        history.clear();
         DisplayStrings();
     }
     private void ClearCurrent()
     {
-        current = 0;
-        isNewNumber = true;
+        current = new HistoryItem();
+        current.isOperation = false;
+        current.content = "0";
+        isNewNumber=true;
         DisplayStrings();
     }
     private void NumericInput(String number)
     {
-        current=(isNewNumber?0:current*10)+Integer.decode(number);
+        current.content=(isNewNumber?"":current.content)+number;
         isNewNumber = false;
         DisplayStrings();
     }
     private void BinaryOperationInput(String operation)
     {
-        previous = current;
+        HistoryItem opItem = new HistoryItem();
+        opItem.isOperation = true;
+        opItem.content = operation;
+        history.add(current);
+        current = eval(history);
+        history.add(opItem);
         isNewNumber = true;
-        op = operation.charAt(0);
         DisplayStrings();
+    }
+
+    private HistoryItem eval(ArrayList<HistoryItem> history) {
+        int currennt =0 ;
+        int result = 0;
+        String curOp = "";
+        for (HistoryItem item:history) {
+            if (item.isOperation)
+            {
+                curOp = item.content;
+                continue;
+            }
+            else{
+                currennt = Integer.decode(item.content);
+            }
+            switch (curOp) {
+                case "-":
+                    result=result-currennt;
+                    break;
+                case "+":
+                    result=result+currennt;
+                    break;
+                default:
+                    result = currennt;
+                    break;
+            }
+        }
+        final int finalResult = result;
+        return new HistoryItem(){{isOperation=false;content=Integer.toString(finalResult);}};
     }
 
     private void EvalInput()
     {
-        if (previous != null)
-        {
-            switch (op)
-            {
-                case '+':
-                    current = previous + current;
-                    break;
-                case '-':
-                    current = previous - current;
-                    break;
-            }
-            previous = null;
-        }
+        history.add(current);
+        current  = eval(history);
+        history.clear();
         isNewNumber = true;
         DisplayStrings();
     }
@@ -74,7 +105,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        DisplayStrings();
+        ClearAll();
     }
 
     public void numericButton_Click(View view) {
