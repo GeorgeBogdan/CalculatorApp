@@ -18,7 +18,7 @@ public class MainActivity extends ActionBarActivity {
     private boolean isNewNumber = true;
     private Character op = '\0';
 
-    private void DisplayStrings()
+    private void DisplayStrings()//some change@
     {
         TextView currentTextView = (TextView)findViewById(R.id.currentTextView);
         currentTextView.setText(Integer.toString(current));
